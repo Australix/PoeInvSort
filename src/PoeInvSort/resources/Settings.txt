@@ -1,0 +1,25 @@
+***Settings***
+View README for details on sorting options.
+
+Slower Execution (FALSE/TRUE): 
+FALSE
+
+Ignore these inventory slots (Integers 0-59 separated by commas. No spaces!):
+3,4,9
+
+Auto-Vendor Items (FALSE/TRUE):
+FALSE
+
+Lines of text between "Daily Mission" and "Purchase Decorations":
+12
+
+Item filters (<destTab>:<rarity>:<nameContains>:<descriptionContains>):
+0:*:Map:*
+4:#fragment:*:*
+2:#essence:*:*
+1:Currency:*:*
+3:Divination:*:*
+5:*:*:#6socket
+5:*:*:#chromatic
+5:Rare:*:Unidentified
+6:*:*:*
