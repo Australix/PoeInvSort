@@ -1,10 +1,21 @@
 package PoeInvSort;
 
-import com.sun.jna.*;
+import java.awt.Toolkit;
+import java.awt.Window;
+
+import com.sun.jna.Native;
+import com.sun.jna.Pointer;
+import com.sun.jna.PointerType;
+import com.sun.jna.platform.win32.GDI32;
+import com.sun.jna.platform.win32.WinDef;
+import com.sun.jna.platform.win32.WinDef.HDC;
 import com.sun.jna.platform.win32.WinDef.HWND;
-import com.sun.jna.win32.*;
+import com.sun.jna.platform.win32.WinNT;
+import com.sun.jna.win32.StdCallLibrary;
+import com.sun.jna.win32.W32APIOptions;
 
 public class GetWindowRect {
+   public static HWND hwnd = User32.INSTANCE.GetForegroundWindow();
 
    public interface User32 extends StdCallLibrary {
        User32 INSTANCE = (User32) Native.loadLibrary("user32", User32.class,
@@ -12,10 +23,30 @@ public class GetWindowRect {
        int GetWindowRect(HWND handle, int[] rect);
        HWND GetForegroundWindow();
        int GetWindowTextA(PointerType hWnd, byte[] lpString, int nMaxCount);
+       HDC GetDC(HWND hwnd);
+       HWND FindWindow(String winClass, String title); 
+   }
+   
+	public static void getScaling() {
+        float toolkit = 0;
+        float jna = 0;
+        WinDef.HDC hdc = GDI32.INSTANCE.CreateCompatibleDC(User32.INSTANCE.GetDC(hwnd));
+        if (hdc != null) {
+            float actual = GDI32.INSTANCE.GetDeviceCaps(hdc, 10 /* VERTRES */);
+            float logical = GDI32.INSTANCE.GetDeviceCaps(hdc, 117 /* DESKTOPVERTRES */);
+            GDI32.INSTANCE.DeleteDC(hdc);
+
+            System.out.println(actual + ", " + logical);
+            if (logical != 0 && logical/actual >= 1) {
+                jna = logical/actual;
+            }
+        }
+        toolkit = (Toolkit.getDefaultToolkit().getScreenResolution() / 96.0f); // TODO this stuff doesn't work in test, might delete later
+        System.out.println("JNA found: " + jna);
+        System.out.println("Toolkit found: " + toolkit);
    }
    
    public static int[] getPoeWindowDims() throws NotActiveWindowException {
-	   HWND hwnd = User32.INSTANCE.GetForegroundWindow();
 	   String poe = "Path of Exile";
 	   if (!getWindowTitle(hwnd).equals(poe)) throw new NotActiveWindowException(poe);
 	   int[] rect = {0, 0, 0, 0};
