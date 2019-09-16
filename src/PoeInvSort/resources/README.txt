@@ -12,6 +12,12 @@ partyCommand3:
 
 Done!
 
+*** Janky workarounds ***
+ - The program can only detect your default display's scaling factor for accurate mouse movement.
+Make sure the display you play PoE on is your default (in display options), or if you use
+multiple monitors make sure one of them is defualt and they have the same scaling factor. 
+ - Not tested across multiple monitors.
+
 *** Settings Description ***
  - Slower execution can help if you are experiencing bugs or are on a weaker computer. 
  - Tabs are indexed starting from 0. 
