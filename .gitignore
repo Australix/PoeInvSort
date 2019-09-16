@@ -1,5 +1,4 @@
 
 .classpath
 test.txt
-.classpath
-bin/*
+bin
