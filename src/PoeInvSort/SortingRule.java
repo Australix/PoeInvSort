@@ -1,14 +1,12 @@
 package PoeInvSort;
 
-import java.util.Arrays;
-import java.util.List;
-
 public class SortingRule {
 	int tab;
 	String rarity;
 	String name;
 	String description;
 	
+	// Constructor. Accepts one sorting rule line from settings file as input. 
 	public SortingRule(String input) {
 		String[] data = input.split(":");
 		tab = Integer.parseInt(data[0]);
@@ -16,31 +14,75 @@ public class SortingRule {
 		name = data[2];
 		description = data[3];
 	}
+
+	
+	// Array of tags used to detect Fragments. 
+	private static final String[] fragmentTags = {
+			"Offering to the ",
+			"Sacrifice at ",
+			"Fragment of the ",
+			//"Blessing of ",
+			"Splinter of ",
+			"Mortal ",
+			"'s Breachstone",
+			"'s Key",
+			"Divine Vessel"
+	};
+
+	// Function used to detect Fragments. 
+	private boolean isFragment(String itemName) {
+		if (containsAny(itemName, fragmentTags)) return true;
+		String[] tokens = itemName.split(" ");
+		if (tokens.length == 3) {
+			if (tokens[0].equals("Timeless") && tokens[2].equals("Splinter")) return true;
+			if (tokens[0].equals("Timeless") && tokens[2].equals("Emblem")) return true;
+			if (tokens[2].equals("Scarab")) return true;
+		}
+		return false;
+	}
+	
+	// Array of tags used to detect items that can be vendored for a Chromatic Orb. 
+	// TODO detect combinations of RBG that are not adjacent eg. in 4-links.
+	private static final String[] chromaticTags = {
+			"R-G-B", 
+			"G-R-B", 
+			"B-G-R", 
+			"R-B-G", 
+			"G-B-R", 
+			"B-R-G"
+	};
 	
 	public boolean isMatch(Item item) {
 		// compare rarity or #fragment or #essence
 		if (!rarity.equals("*")) {
 			if (rarity.equals("#fragment")) {
-				if (containsAny(item.name, Arrays.asList("Offering to the ", 
-					"Sacrifice at ", "Fragment of the ", "Blessing of ", "Splinter of ", 
-					"Mortal ", "'s Breachstone", "'s Key", "Divine Vessel"))) {
-					return true;
-				} else return false;
+				if (!isFragment(item.name)) return false;
 			}
-			if (rarity.equals("#essence")) {
-				if (item.name.contains("Essence") || item.name.startsWith("Remnant of")) {
-					return true;
-				} else return false;
+			else if (rarity.equals("#essence")) {
+				if (!(item.name.contains("Essence of ")
+						|| item.name.startsWith("Remnant of "))) return false;
 			}
-			if (!item.rarity.contains(rarity)) return false;
+			else if (rarity.equals("#oil")) {
+				if (!item.rarity.equals("Currency") || !item.name.contains("Oil")) return false;
+			}
+			else if (rarity.equals("#fossil")) {
+				if (!item.rarity.equals("Currency") || !item.name.contains("Fossil")) return false;
+			}
+			else if (rarity.equals("#resonator")) {
+				if (!item.rarity.equals("Currency") || !item.name.contains("Resonator")) return false;
+			}
+			else if (!item.rarity.contains(rarity)) {
+				return false;
+			}
 		}
+		
 		// compare name
 		if (!name.equals("*") && !item.name.contains(name)) return false;
+		
 		// compare description or #chromatic or #6socket
 		if (!description.equals("*")) {
 			if (description.equals("#chromatic")) {
-				if (!containsAny(item.getSockets(), Arrays.asList("R-G-B", "G-R-B", 
-					"B-G-R", "R-B-G", "G-B-R", "B-R-G"))) {
+				if (!containsAny(item.getSockets(), chromaticTags)) {
 					return false;
 				}
 			}
@@ -49,21 +91,31 @@ public class SortingRule {
 					return false; 
 				}
 			}
-			else if (!item.getData().contains(description)) return false;
+			else if (!item.getData().contains(description)) {
+				return false;
+			}
 		}
 		return true;
 	}
 	
 	public int guessSize(Item item) {
 		if (rarity.equals("Currency")) return 1;
-		if (rarity.equals("#fragment") && !item.name.equals("Divine Vessel")) return 1;
+		if (rarity.equals("#fragment")) return 1;
 		if (rarity.contains("Divination")) return 1;
 		if (rarity.equals("#essence")) return 1;
+		if (rarity.equals("#oil")) return 1;
+		if (rarity.equals("#fossil")) return 1;
+		if (rarity.equals("#resonator")) {
+			if (item.name.startsWith("Primitive")) return 1;
+			if (item.name.startsWith("Potent")) return 2;
+			if (item.name.startsWith("Powerful")) return 4;
+			if (item.name.startsWith("Prime")) return 4;
+		}
 		if (name.contains("Map")) return 1;
 		return 0;
 	}
 	
-	private static boolean containsAny(String input, List<String> keywords) {
+	private static boolean containsAny(String input, String[] keywords) {
 		for (String s : keywords) {
 			if (input.contains(s)) return true;
 		}
