@@ -7,7 +7,7 @@ FALSE
 Ignore these inventory slots (Integers 0-59 separated by commas. No spaces!):
 3,4,9
 
-Auto-Vendor Items (FALSE/TRUE):
+Auto-Vendor Items (FALSE/TRUE): // DONT USE THIS, OUT OF DATE
 FALSE
 
 Lines of text between "Daily Mission" and "Purchase Decorations":
@@ -15,11 +15,13 @@ Lines of text between "Daily Mission" and "Purchase Decorations":
 
 Item filters (<destTab>:<rarity>:<nameContains>:<descriptionContains>):
 0:*:Map:*
-4:#fragment:*:*
-2:#essence:*:*
+3:#fragment:*:*
+4:#fossil:*:*
+4:#resonator:*:*
+5:#essence:*:*
 1:Currency:*:*
-3:Divination:*:*
-5:*:*:#6socket
-5:*:*:#chromatic
-5:Rare:*:Unidentified
+2:Divination:*:*
 6:*:*:*
+6:*:*:#6socket
+6:*:*:#chromatic
+6:Rare:*:Unidentified
