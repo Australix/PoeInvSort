@@ -6,9 +6,18 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyEvent;
 import java.util.LinkedList;
 
+import com.sun.jna.Native;
+import com.sun.jna.PointerType;
+import com.sun.jna.platform.win32.GDI32;
+import com.sun.jna.platform.win32.WinDef;
 import com.sun.jna.platform.win32.BaseTSD.ULONG_PTR;
 import com.sun.jna.platform.win32.WinDef.DWORD;
+import com.sun.jna.platform.win32.WinDef.HDC;
+import com.sun.jna.platform.win32.WinDef.HWND;
 import com.sun.jna.platform.win32.WinUser.INPUT;
+import com.sun.jna.win32.StdCallLibrary;
+import com.sun.jna.win32.W32APIOptions;
+
 import com.sun.jna.platform.win32.WinDef.LONG;
 import com.sun.jna.platform.win32.WinDef.WORD;
 
@@ -17,7 +26,10 @@ import static com.sun.jna.platform.win32.User32.INSTANCE;
 public class MKControl {
 	private static final double uiWidth = 12.670; // 840/66.3 pixels
 	private static double slotSize; // 66.3 pixels/1360 height
+	private static double scaleFactor;
 	private static int[] windowDims; // [0]=left, [1]=top, [2]=right, [3]=bottom
+	private static int xMonitor;
+	private static int yMonitor;
 	
 	// JNA inputs for mouse/keyboard functions
 	private static INPUT[] mousePress;
@@ -32,12 +44,79 @@ public class MKControl {
 	static boolean slowerExc = false;
 	static Integer vendorSellOffset = null;
 	
-	
-	public static void init() throws Throwable {
-		windowDims = GetWindowRect.getPoeWindowDims();
-		slotSize = 0.04875 * (windowDims[3] - windowDims[1]);
+	public static HWND hwnd = User32.INSTANCE.GetForegroundWindow();
+
+	/* Interface for something, I don't really know */
+	public interface User32 extends StdCallLibrary {
+		User32 INSTANCE = (User32) Native.loadLibrary("user32", User32.class,
+				W32APIOptions.DEFAULT_OPTIONS);
+		int GetWindowRect(HWND handle, int[] rect);
+		HWND GetForegroundWindow();
+		int GetWindowTextA(PointerType hWnd, byte[] lpString, int nMaxCount);
+		HDC GetDC(HWND hwnd);
+		HWND FindWindow(String winClass, String title); 
+		int GetSystemMetrics(int i);
+	}
+
+	private static double getScaleFactor() {
+		WinDef.HDC hdc = GDI32.INSTANCE.CreateCompatibleDC(null);
+		if (hdc != null) {
+			double actual = GDI32.INSTANCE.GetDeviceCaps(hdc, 10 /* VERTRES */);
+			double logical = GDI32.INSTANCE.GetDeviceCaps(hdc, 117 /* DESKTOPVERTRES */);
+			GDI32.INSTANCE.DeleteDC(hdc);
+
+			if (logical != 0 && logical/actual >= 1) {
+				return logical/actual;
+			}
+		}
+		System.out.println("scaling failed");
+        return 1.25;
+	}
+
+	public static int[] getPoeWindowDims() throws NotActiveWindowException {
+		String poe = "Path of Exile";
+		if (!getWindowTitle(hwnd).equals(poe)) throw new NotActiveWindowException(poe);
+		int[] rect = {0, 0, 0, 0};
+		User32.INSTANCE.GetWindowRect(hwnd, rect);
+		// offsets for title bar and extra border
+		if (scaleFactor == 1.0) {
+			rect[0] = rect[0] + 8;
+			rect[1] = rect[1] + 32;
+			rect[2] = rect[2] - 8;
+			rect[3] = rect[3] - 8;
+		} else {
+			rect[0] = rect[0] + 7;
+			rect[1] = rect[1] + 7 + (int)(24*scaleFactor);
+			rect[2] = (int)((rect[2] - 7) * scaleFactor);
+			rect[3] = (int)((rect[3] - 7) * scaleFactor);
+		}
+
+		return rect;
+	}
+
+	public static String getWindowTitle(HWND hwnd) {
+		if (hwnd == null) return "";
+		byte[] title = new byte[512];
+		User32.INSTANCE.GetWindowTextA(hwnd, title, 512);
+		return Native.toString(title);
+	}   
+	   
+	@SuppressWarnings("serial")
+	public static class NotActiveWindowException extends Exception {
+		public NotActiveWindowException(String name) {
+			super(name + " window not active/open!");
+		}
 	}
 	
+	// 2656 803
+	public static void init() throws Throwable {
+		scaleFactor = getScaleFactor();
+		windowDims = getPoeWindowDims();
+		slotSize = 0.04875 * (windowDims[3] - windowDims[1]);
+		xMonitor = User32.INSTANCE.GetSystemMetrics(0x0); // SM_CXSCREEN
+		yMonitor = User32.INSTANCE.GetSystemMetrics(0x1); // SM_CYSCREEN
+	}
+
 	private static void jnaMouseMove(LONG x, LONG y) {
 		// init
 		if (mouseMove == null) {
@@ -54,7 +133,8 @@ public class MKControl {
 		mouseMove[0].input.mi.dx = x;
 		mouseMove[0].input.mi.dy = y;
 		@SuppressWarnings("unused")
-		DWORD result = INSTANCE.SendInput(new DWORD(1), mouseMove, mouseMove[0].size()); // inputs are # inputs, INPUT[] array, struct size
+		DWORD result = INSTANCE.SendInput(new DWORD(1), mouseMove, mouseMove[0].size()); 
+		// inputs are # inputs, INPUT[] array, struct size
 	}
 	
 	private static void click() {
@@ -76,6 +156,7 @@ public class MKControl {
 	}
 	
 	private static void jnaKeyPress(int key) {
+		// init
 		if (keyPress == null) {
 			INPUT input = new INPUT();
 			input.type = new DWORD(INPUT.INPUT_KEYBOARD);
@@ -92,6 +173,7 @@ public class MKControl {
 	}
 	
 	private static void jnaKeyRelease(int key) {
+		// init
 		if (keyPress == null) {
 			INPUT input = new INPUT();
 			input.type = new DWORD(INPUT.INPUT_KEYBOARD);
@@ -109,40 +191,40 @@ public class MKControl {
 	
 	public static void wait(int time) throws InterruptedException {
 		int rand = (int) (Math.random() * time/4) + time;
-		if (slowerExc) rand += 100;
+		if (slowerExc) Thread.sleep(rand*3);
 		Thread.sleep(rand);
 	}
 	
 	public static void waitCnst(int time) throws InterruptedException {
-		if (slowerExc) Thread.sleep(time + 100);
+		if (slowerExc) Thread.sleep(time*3);
 		else Thread.sleep(time);
 	}
 
 	/* Used for UI elements on left half of screen e.g. stash.
 	 * Inputs are in scale of inventory spaces. */
 	private static void mouseMoveFromLeft(double X, double Y) throws Throwable {
-		LONG x = new LONG((int) ((windowDims[0] + X * slotSize) * 65536 / (windowDims[2] - windowDims[0])));
-		LONG y = new LONG((int) ((windowDims[1] + Y * slotSize) * 65536 / (windowDims[3] - windowDims[1])));
+		LONG x = new LONG((int) ((windowDims[0] + X * slotSize) * 65536 / xMonitor / scaleFactor));
+		LONG y = new LONG((int) ((windowDims[1] + Y * slotSize) * 65536 / yMonitor / scaleFactor));
 		jnaMouseMove(x, y);
-		//waitCnst(25);
+		waitCnst(15);
 	}
 	
 	/* Used for UI elements on right half of screen e.g. inventory.
 	 * Inputs are in scale of inventory spaces. */
 	private static void mouseMoveFromRight(double X, double Y) throws Throwable {
-		LONG x = new LONG((int) ((windowDims[2] - X * slotSize) * 65536 / (windowDims[2] - windowDims[0])));
-		LONG y = new LONG((int) ((windowDims[1] + Y * slotSize) * 65536 / (windowDims[3] - windowDims[1])));
+		LONG x = new LONG((int) ((windowDims[2] - X * slotSize) * 65536 / xMonitor / scaleFactor));
+		LONG y = new LONG((int) ((windowDims[1] + Y * slotSize) * 65536 / yMonitor / scaleFactor));
 		jnaMouseMove(x, y);
-		//waitCnst(25);
+		waitCnst(15);
 	}
 	
 	/* Used for character movement. 
 	 * Measured from middle of width of screen and top of window. */
-	private static void mouseMoveFromMiddle(double X, double Y) throws Throwable {
-		LONG x = new LONG((int) (((windowDims[0] + windowDims[2])/2 + X * slotSize) * 65536 / (windowDims[2] - windowDims[0])));
-		LONG y = new LONG((int) ((windowDims[1] + Y * slotSize) * 65536 / (windowDims[3] - windowDims[1])));
+	public static void mouseMoveFromMiddle(double X, double Y) throws Throwable {
+		LONG x = new LONG((int) (((windowDims[0] + windowDims[2])/2 + X * slotSize) * 65536 / xMonitor / scaleFactor));
+		LONG y = new LONG((int) ((windowDims[1] + Y * slotSize) * 65536 / yMonitor / scaleFactor));
 		jnaMouseMove(x, y);
-		//waitCnst(25);
+		waitCnst(15);
 	}
 	
 	// 1732, 528	1510
@@ -160,10 +242,10 @@ public class MKControl {
 	public static void openTab(int tab) throws Throwable {
 		mouseMoveFromLeft(12.157, 2.715);
 		click();
-		wait(30);
+		wait(100);
 		mouseMoveFromLeft(12.972, 2.715 + 0.4247 * tab);
 		click();
-		wait(110);
+		wait(200);
 	}
 	
 	public static void ctrlClickAt(LinkedList<Item> items) throws Throwable {
@@ -172,7 +254,7 @@ public class MKControl {
 			int loc = item.occupying.get(0);
 			mouseMoveFromRight(11.840 - (loc/5), 11.674 + (loc%5));
 			click();
-			wait(80);
+			wait(20);
 		}
 		jnaKeyRelease(KeyEvent.VK_CONTROL);
 	}	
@@ -185,7 +267,7 @@ public class MKControl {
 		jnaKeyPress(KeyEvent.VK_C);
 		jnaKeyRelease(KeyEvent.VK_C);
 		jnaKeyRelease(KeyEvent.VK_CONTROL);
-		wait(80);
+		wait(15);
 		return (String) Toolkit.getDefaultToolkit().
 				getSystemClipboard().getData(DataFlavor.stringFlavor);
 	}
