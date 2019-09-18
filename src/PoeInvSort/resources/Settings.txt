@@ -5,7 +5,7 @@ Slower Execution (FALSE/TRUE):
 FALSE
 
 Ignore these inventory slots (Integers 0-59 separated by commas. No spaces!):
-3,4,9
+3,4,9,53,54,58,59
 
 Auto-Vendor Items (FALSE/TRUE): // DONT USE THIS, OUT OF DATE
 FALSE
