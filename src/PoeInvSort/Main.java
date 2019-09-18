@@ -23,7 +23,7 @@ public class Main {
 	
 	private static void initialize() throws Throwable {
 		// load settings from Settings file
-		String settings = fileToString("Settings.txt");
+		String settings = fileToString("SortSettings.ini");
 		String[] lines = settings.split("\\r?\\n");
 		if (lines[4].equals("TRUE")) MKControl.slowerExc = true;
 		
@@ -50,11 +50,11 @@ public class Main {
 
     public static String fileToString(String resource) {
         // path within jar file
-        InputStream input = Main.class.getResourceAsStream("/resources/" + resource);
+        InputStream input = Main.class.getResourceAsStream(resource);
         if (input == null) {
             // path within eclipse
             input = Main.class.getClassLoader().
-            		getResourceAsStream("PoeInvSort/resources/" + resource);
+            		getResourceAsStream(resource);
         }
         @SuppressWarnings("resource")
 		Scanner s = new Scanner(input).useDelimiter("\\A");
