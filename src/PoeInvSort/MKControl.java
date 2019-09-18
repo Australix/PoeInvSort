@@ -26,16 +26,17 @@ import static com.sun.jna.platform.win32.User32.INSTANCE;
 public class MKControl {
 	private static final double uiWidth = 12.670; // 840/66.3 pixels
 	private static double slotSize; // 66.3 pixels/1360 height
-	private static double scaleFactor;
+	private static double scaleFactor; // windows scaling factor
 	private static int[] windowDims; // [0]=left, [1]=top, [2]=right, [3]=bottom
-	private static int xMonitor;
-	private static int yMonitor;
+	// Pixels on screen have to be multiplied by these values for mouse movement
+	private static double xMouseScale;
+	private static double yMouseScale;
 	
 	// JNA inputs for mouse/keyboard functions
 	private static INPUT[] mousePress;
 	private static INPUT[] mouseMove;
 	private static INPUT[] keyPress;
-	
+	// Constants for JNA mouse control
 	private static final long MOUSEEVENTF_MOVE = 0x0001L;
 	private static final long MOUSEEVENTF_ABSOLUTE = 0x8000L;
 	private static final long MOUSEEVENTF_LEFTDOWN = 0x0002L;
@@ -90,7 +91,6 @@ public class MKControl {
 			rect[2] = (int)((rect[2] - 7) * scaleFactor);
 			rect[3] = (int)((rect[3] - 7) * scaleFactor);
 		}
-
 		return rect;
 	}
 
@@ -113,14 +113,17 @@ public class MKControl {
 		scaleFactor = getScaleFactor();
 		windowDims = getPoeWindowDims();
 		slotSize = 0.04875 * (windowDims[3] - windowDims[1]);
-		xMonitor = User32.INSTANCE.GetSystemMetrics(0x0); // SM_CXSCREEN
-		yMonitor = User32.INSTANCE.GetSystemMetrics(0x1); // SM_CYSCREEN
+		int xMonitor = User32.INSTANCE.GetSystemMetrics(0x0); // SM_CXSCREEN
+		int yMonitor = User32.INSTANCE.GetSystemMetrics(0x1); // SM_CYSCREEN
+		xMouseScale = 65536 / xMonitor / scaleFactor;
+		yMouseScale = 65536 / yMonitor / scaleFactor;
 	}
 
 	private static void jnaMouseMove(LONG x, LONG y) {
 		// init
 		if (mouseMove == null) {
-			// mouse movement code gotten from https://stackoverflow.com/questions/52174294/how-to-drag-mouse-with-jna-platform-win32
+			// mouse movement code gotten from 
+			// https://stackoverflow.com/questions/52174294/how-to-drag-mouse-with-jna-platform-win32
 			INPUT mm = new INPUT();
 			mm.type = new DWORD(INPUT.INPUT_MOUSE);
 			mm.input.setType("mi");
@@ -192,7 +195,7 @@ public class MKControl {
 	public static void wait(int time) throws InterruptedException {
 		int rand = (int) (Math.random() * time/4) + time;
 		if (slowerExc) Thread.sleep(rand*3);
-		Thread.sleep(rand);
+		else Thread.sleep(rand);
 	}
 	
 	public static void waitCnst(int time) throws InterruptedException {
@@ -203,8 +206,8 @@ public class MKControl {
 	/* Used for UI elements on left half of screen e.g. stash.
 	 * Inputs are in scale of inventory spaces. */
 	private static void mouseMoveFromLeft(double X, double Y) throws Throwable {
-		LONG x = new LONG((int) ((windowDims[0] + X * slotSize) * 65536 / xMonitor / scaleFactor));
-		LONG y = new LONG((int) ((windowDims[1] + Y * slotSize) * 65536 / yMonitor / scaleFactor));
+		LONG x = new LONG((int) ((windowDims[0] + X * slotSize) * xMouseScale));
+		LONG y = new LONG((int) ((windowDims[1] + Y * slotSize) * yMouseScale));
 		jnaMouseMove(x, y);
 		waitCnst(15);
 	}
@@ -212,8 +215,8 @@ public class MKControl {
 	/* Used for UI elements on right half of screen e.g. inventory.
 	 * Inputs are in scale of inventory spaces. */
 	private static void mouseMoveFromRight(double X, double Y) throws Throwable {
-		LONG x = new LONG((int) ((windowDims[2] - X * slotSize) * 65536 / xMonitor / scaleFactor));
-		LONG y = new LONG((int) ((windowDims[1] + Y * slotSize) * 65536 / yMonitor / scaleFactor));
+		LONG x = new LONG((int) ((windowDims[2] - X * slotSize) * xMouseScale));
+		LONG y = new LONG((int) ((windowDims[1] + Y * slotSize) * yMouseScale));
 		jnaMouseMove(x, y);
 		waitCnst(15);
 	}
@@ -221,8 +224,8 @@ public class MKControl {
 	/* Used for character movement. 
 	 * Measured from middle of width of screen and top of window. */
 	public static void mouseMoveFromMiddle(double X, double Y) throws Throwable {
-		LONG x = new LONG((int) (((windowDims[0] + windowDims[2])/2 + X * slotSize) * 65536 / xMonitor / scaleFactor));
-		LONG y = new LONG((int) ((windowDims[1] + Y * slotSize) * 65536 / yMonitor / scaleFactor));
+		LONG x = new LONG((int) (((windowDims[0] + windowDims[2])/2 + X * slotSize) * xMouseScale));
+		LONG y = new LONG((int) ((windowDims[1] + Y * slotSize) * yMouseScale));
 		jnaMouseMove(x, y);
 		waitCnst(15);
 	}
@@ -289,18 +292,5 @@ public class MKControl {
 			wait(500);
 			moveTo("stash");
 		}
-	}
-	
-	public static void copypastetest() {
-		jnaKeyPress(KeyEvent.VK_CONTROL);
-		jnaKeyPress(KeyEvent.VK_A);
-		jnaKeyRelease(KeyEvent.VK_A);
-		jnaKeyPress(KeyEvent.VK_C);
-		jnaKeyRelease(KeyEvent.VK_C);
-		for (int i = 0; i < 10; i++) {
-			jnaKeyPress(KeyEvent.VK_V);
-			jnaKeyRelease(KeyEvent.VK_V);
-		}
-		jnaKeyRelease(KeyEvent.VK_CONTROL);
 	}
 }
