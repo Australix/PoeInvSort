@@ -26,15 +26,18 @@ public class Main {
 		String settings = fileToString("Settings.txt");
 		String[] lines = settings.split("\\r?\\n");
 		if (lines[4].equals("TRUE")) MKControl.slowerExc = true;
+		
 		// parse ignored inventory slots
 		String[] ignoreSlots = lines[7].split(",");
 		LinkedList<Integer> list = new LinkedList<Integer>();
 		for (int i = 0; i < ignoreSlots.length; i++) {
 			list.add(Integer.parseInt(ignoreSlots[i]));
 		}
+		
 		// auto vendor settings
 		if (lines[10].equals("TRUE")) Inventory.autoVendor = true;
 		MKControl.vendorSellOffset = Integer.parseInt(lines[13]);
+		
 		// item sorting rules
 		for (int i = 16; i < lines.length; i++) {
 			sortRules.add(new SortingRule(lines[i]));

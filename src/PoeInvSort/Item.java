@@ -1,86 +1,70 @@
 package PoeInvSort;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-
 public class Item {
 	private String data;
 	private String sockets;
-	private int type = -3; //"null"
-	private boolean sized = false;
-	List<Integer> occupying = new LinkedList<Integer>();
+	public String rarity;
+	public String name;
 	
-	String rarity;
-	String name;
+	public int type = -1; // -1 = ignore by sorter
 	
-	// constructor
-	public Item(int loc) throws Throwable {
-		data = MKControl.copyItemInfo(loc);
-		occupying.add(loc);
-		initData();
-		// updates size/type of item
-		getType();
-		if (type != -1) {
-			if (!sized) sizeItem();
-			Main.inventory.addItem(this);
-		}
+	int location;
+	Size size = Size.Unsized;
+	
+	enum Size {
+		Unsized, _1x1, _1x2, _1x3, _1x4, _2x1, _2x2, _2x3, _2x4;
 	}
-	// constructor used if data has already been copied
+
+	// constructor
 	public Item(int loc, String copiedData) throws Throwable {
 		data = copiedData;
-		occupying.add(loc);
+		location = loc;
 		initData();
-		// updates size/type of item
-		getType();
-		if (type != -1) {
-			if (!sized) sizeItem();
-			Main.inventory.addItem(this);
-		}
 	}
 	
 	private void initData() {
-		if (!data.equals("")) {
-			String[] data = this.data.split("\\r?\\n");
-			rarity = data[0].substring(8);
-			name = data[1];
-			if (!data[2].contains("---")) name = name + " " + data[2];
-			getSockets();
+		String[] data = this.data.split("\\r?\\n");
+		rarity = data[0].substring(8);
+		name = data[1];
+		if (!data[2].contains("---")) name = name + " " + data[2];
+		
+
+		sockets = "";
+		for (int i = 5; i < data.length; i++) {
+			if (data[i].startsWith("Sockets")) {
+				sockets = data[i].substring(9);
+			}
 		}
 	}
 	
 	public String getSockets() {
-		if(sockets == null) {
-			String[] data2 = data.split("\\r?\\n");
-			sockets = "";
-			for (int i = 5; i < data2.length; i++) {
-				if (data2[i].startsWith("Sockets")) {
-					sockets = data2[i].substring(9);
-				}
-			}
-		}
 		return sockets;
 	}
 
 	public void sizeItem() throws Throwable {
-		int loc = occupying.get(0);
-		if (locCompare(loc+8)) { // 2x4
-			occupying.addAll(Arrays.asList(loc+1, loc+2, loc+3, loc+5, loc+6, loc+7, loc+8));
-		} else if (locCompare(loc+7)) { // 2x3
-			occupying.addAll(Arrays.asList(loc+1, loc+2, loc+5, loc+6, loc+7));
-		} else if (locCompare(loc+2)) { // 1x3
-			occupying.addAll(Arrays.asList(loc+1, loc+2));
-		} else if (locCompare(loc+6)) { // 2x2
-			occupying.addAll(Arrays.asList(loc+1, loc+5, loc+6));
-		} else if (locCompare(loc+5)) { // 2x1
-			occupying.add(loc+5);
-		} else if (locCompare(loc+1)) { // 1x2
-			occupying.add(loc+1);
-		} // 1x1 does not trigger any of them
-		sized = true;
+		if (size == Size.Unsized) {
+			if        ((location%5 < 2) && locCompare(location+8)) {
+				size = Size._2x4;
+			} else if ((location%5 < 2) && locCompare(location+3)) {
+				size = Size._1x4;
+			} else if ((location%5 < 3) && locCompare(location+7)) {
+				size = Size._2x3;
+			} else if ((location%5 < 3) && locCompare(location+2)) {
+				size = Size._1x3;
+			} else if ((location%5 < 4) && locCompare(location+6)) {
+				size = Size._2x2;
+			} else if ((location%5 < 4) && locCompare(location+1)) {
+				size = Size._1x2;
+			} else if (                    locCompare(location+5)) {
+				size = Size._2x1;
+			} else {
+				size = Size._1x1;
+			}
+		}
 	}
 	
 	private boolean locCompare(int newLoc) throws Throwable {
+		if (newLoc > 59) return false;
 		String otherData = Main.inventory.readItemData(newLoc);
 		if (otherData == null) otherData = MKControl.copyItemInfo(newLoc);
 		if (otherData.equals(data)) {
@@ -90,26 +74,7 @@ public class Item {
 			return false;
 		}
 	}
-	
-	public int getType() {
-		if (type != -3) return type;
-		if (data.equals("")) {
-			type = -1;
-			sized = true;
-			return type;
-		}
-		for (SortingRule s : Main.sortRules) {
-			if (s.isMatch(this)) {
-				if (s.guessSize(this) != 0) {
-					sized = true;
-				}
-				type = s.tab;
-				return type;
-			}
-		}
-		return -1; // anything not accounted for in filter
-	}
-	
+
 	public String getData() {
 		return data;
 	}

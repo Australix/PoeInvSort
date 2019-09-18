@@ -1,5 +1,7 @@
 package PoeInvSort;
 
+import PoeInvSort.Item.Size;
+
 public class SortingRule {
 	int tab;
 	String rarity;
@@ -98,21 +100,21 @@ public class SortingRule {
 		return true;
 	}
 	
-	public int guessSize(Item item) {
-		if (rarity.equals("Currency")) return 1;
-		if (rarity.equals("#fragment")) return 1;
-		if (rarity.contains("Divination")) return 1;
-		if (rarity.equals("#essence")) return 1;
-		if (rarity.equals("#oil")) return 1;
-		if (rarity.equals("#fossil")) return 1;
+	public Size guessSize(Item item) {
+		if (rarity.equals("Currency")) return Size._1x1;
+		if (rarity.equals("#fragment")) return Size._1x1;
+		if (rarity.contains("Divination")) return Size._1x1;
+		if (rarity.equals("#essence")) return Size._1x1;
+		if (rarity.equals("#oil")) return Size._1x1;
+		if (rarity.equals("#fossil")) return Size._1x1;
 		if (rarity.equals("#resonator")) {
-			if (item.name.startsWith("Primitive")) return 1;
-			if (item.name.startsWith("Potent")) return 2;
-			if (item.name.startsWith("Powerful")) return 4;
-			if (item.name.startsWith("Prime")) return 4;
+			if (item.name.startsWith("Primitive")) return Size._1x1;
+			if (item.name.startsWith("Potent")) return Size._1x2;
+			if (item.name.startsWith("Powerful")) return Size._2x2;
+			if (item.name.startsWith("Prime")) return Size._2x2;
 		}
-		if (name.contains("Map")) return 1;
-		return 0;
+		if (name.contains("Map")) return Size._1x1;
+		return Size.Unsized;
 	}
 	
 	private static boolean containsAny(String input, String[] keywords) {

@@ -115,8 +115,8 @@ public class MKControl {
 		slotSize = 0.04875 * (windowDims[3] - windowDims[1]);
 		int xMonitor = User32.INSTANCE.GetSystemMetrics(0x0); // SM_CXSCREEN
 		int yMonitor = User32.INSTANCE.GetSystemMetrics(0x1); // SM_CYSCREEN
-		xMouseScale = 65536 / xMonitor / scaleFactor;
-		yMouseScale = 65536 / yMonitor / scaleFactor;
+		xMouseScale = 65536.0 / xMonitor / scaleFactor;
+		yMouseScale = 65536.0 / yMonitor / scaleFactor;
 	}
 
 	private static void jnaMouseMove(LONG x, LONG y) {
@@ -254,7 +254,7 @@ public class MKControl {
 	public static void ctrlClickAt(LinkedList<Item> items) throws Throwable {
 		jnaKeyPress(KeyEvent.VK_CONTROL);
 		for (Item item : items) {
-			int loc = item.occupying.get(0);
+			int loc = item.location;
 			mouseMoveFromRight(11.840 - (loc/5), 11.674 + (loc%5));
 			click();
 			wait(20);

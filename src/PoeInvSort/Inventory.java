@@ -1,13 +1,12 @@
 package PoeInvSort;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 
+import PoeInvSort.Item.Size;
+
 public class Inventory {
-	private boolean[] inventory = new boolean[60];
-	private LinkedList<Integer> ignore = 
-			new LinkedList<Integer>(Arrays.asList(3, 4, 9)); // default for testing
+	private boolean[] itemPresentAt = new boolean[60];
 	private HashMap<Integer, LinkedList<Item>> tabs = 
 			new HashMap<Integer, LinkedList<Item>>();
 	private HashMap<Integer, String> itemData = new HashMap<Integer, String>();
@@ -36,22 +35,38 @@ public class Inventory {
 	public void scanInventory() throws Throwable {
 		int count = 0;
 		for (int i = 0; i < 60; i++) {
-			if (ignore.contains(i) || inventory[i]) {
+			if (itemPresentAt[i]) {
 				itemData.remove(i);
+				count = 0;
 			} else {
-				Item item;
-				if (itemData.containsKey(i)) {
-					item = new Item(i, itemData.get(i));
-					itemData.remove(i);
+				String copiedData = itemData.get(i);
+				if (copiedData == null) {
+					copiedData = MKControl.copyItemInfo(i);
 				} else {
-					item = new Item(i);
+					itemData.remove(i);
 				}
-				// for efficiency, if 5 empty spaces in a row are found, detection terminates
-				if (item.getType() == -1) {
+				// for efficiency, if 10 empty spaces in a row are found, detection terminates
+				if (copiedData.equals("")) {
 					count++;
-					if (count == 5) return;
+					if (count == 10) return;
 				} else {
 					count = 0;
+					
+					// create new item
+					Item item = new Item(i, copiedData);
+					// sort and size item
+					for (SortingRule s : Main.sortRules) {
+						if (s.isMatch(item)) {
+							item.size = s.guessSize(item);
+							item.sizeItem();
+							item.type = s.tab;
+							break;
+						}
+					}
+					updateItemPresence(item, true);
+					if (item.type != -1) {
+						tabs.get(item.type).add(item);
+					}
 				}
 			}
 		}
@@ -70,21 +85,51 @@ public class Inventory {
 		LinkedList<Item> sellable = tabs.get(-2);
 		MKControl.sellItems(sellable);
 		for (Item item : sellable) {
-			removeItem(item);
+			updateItemPresence(item, false);
 		}
 		tabs.put(-2, new LinkedList<Item>());
 	}
 	
-	public void addItem(Item item) {
-		for (Integer i : item.occupying) {
-			inventory[i] = true;
-		}
-		tabs.get(item.getType()).add(item);
-	}
-	
-	public void removeItem(Item item) {
-		for (Integer i : item.occupying) {
-			inventory[i] = false;
+	public void updateItemPresence(Item item, boolean b) {
+		int loc = item.location;
+		if (item.size == Size.Unsized || item.size == Size._1x1) {
+			itemPresentAt[loc  ] = b;
+		} else if (item.size == Size._1x2) {
+			itemPresentAt[loc  ] = b;
+			itemPresentAt[loc+1] = b;
+		} else if (item.size == Size._1x3) {
+			itemPresentAt[loc  ] = b;
+			itemPresentAt[loc+1] = b;
+			itemPresentAt[loc+2] = b;
+		} else if (item.size == Size._1x4) {
+			itemPresentAt[loc  ] = b;
+			itemPresentAt[loc+1] = b;
+			itemPresentAt[loc+2] = b;
+			itemPresentAt[loc+3] = b;
+		} else if (item.size == Size._2x1) {
+			itemPresentAt[loc  ] = b;
+			itemPresentAt[loc+5] = b;
+		} else if (item.size == Size._2x2) {
+			itemPresentAt[loc  ] = b;
+			itemPresentAt[loc+1] = b;
+			itemPresentAt[loc+5] = b;
+			itemPresentAt[loc+6] = b;
+		} else if (item.size == Size._2x3) {
+			itemPresentAt[loc  ] = b;
+			itemPresentAt[loc+1] = b;
+			itemPresentAt[loc+2] = b;
+			itemPresentAt[loc+5] = b;
+			itemPresentAt[loc+6] = b;
+			itemPresentAt[loc+7] = b;
+		} else if (item.size == Size._2x4) {
+			itemPresentAt[loc  ] = b;
+			itemPresentAt[loc+1] = b;
+			itemPresentAt[loc+2] = b;
+			itemPresentAt[loc+3] = b;
+			itemPresentAt[loc+5] = b;
+			itemPresentAt[loc+6] = b;
+			itemPresentAt[loc+7] = b;
+			itemPresentAt[loc+8] = b;
 		}
 	}
 	
@@ -97,6 +142,8 @@ public class Inventory {
 	}
 	
 	public void setIgnore(LinkedList<Integer> list) {
-		ignore = list;
+		for (int i : list) {
+			itemPresentAt[i] = true;
+		}
 	}
 }
