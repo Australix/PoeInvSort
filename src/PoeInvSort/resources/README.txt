@@ -1,6 +1,6 @@
 *** Installation Instructions ***
 
-1. Navigate to your Lutbot script location
+1. Navigate to your Lutbot script location. This is usually .../Documents/AutoHotKey/LutTools/
 2. Put PoeInvSort.jar in the same folder
 3. Open the script using a text editor
 4. Edit a partyCommand to execute the jar file instead. Example: 
