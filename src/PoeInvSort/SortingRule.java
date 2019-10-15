@@ -42,16 +42,29 @@ public class SortingRule {
 		return false;
 	}
 	
-	// Array of tags used to detect items that can be vendored for a Chromatic Orb. 
-	// TODO detect combinations of RBG that are not adjacent eg. in 4-links.
-	private static final String[] chromaticTags = {
-			"R-G-B", 
-			"G-R-B", 
-			"B-G-R", 
-			"R-B-G", 
-			"G-B-R", 
-			"B-R-G"
-	};
+	// Function used to detect items that can be vendored for a Chromatic Orb.
+	private boolean isChromatic(String sockets) {
+		// A line in the item description says something such as:
+		// Sockets: R-G-B-B B-B
+		// Dashes represent links, spaces represent no link. 
+		String[] tokens = sockets.split(" ");
+		for (String token : tokens) { // for each set of linked sockets...
+			// 6-links cannot be vendored for a chromatic
+			if (token.length() == 11) return false;
+			if (token.length() < 5) continue; // must be at least a 3-link
+			boolean hasRed = false;
+			boolean hasGreen = false;
+			boolean hasBlue = false;
+			for (int index = 0; index < token.length(); index += 2) {
+				char c = token.charAt(index);
+				if (c == 'R') hasRed = true;
+				if (c == 'G') hasGreen = true;
+				if (c == 'B') hasBlue = true;
+			}
+			if (hasRed && hasGreen && hasBlue) return true;
+		}
+		return false;
+	}
 	
 	public boolean isMatch(Item item) {
 		// compare rarity or #fragment or #essence
@@ -83,9 +96,7 @@ public class SortingRule {
 		// compare description or #chromatic or #6socket
 		if (!description.equals("*")) {
 			if (description.equals("#chromatic")) {
-				if (!containsAny(item.getSockets(), chromaticTags)) {
-					return false;
-				}
+				if (!isChromatic(item.getSockets())) return false;
 			}
 			else if (description.equals("#6socket")) {
 				if (!(item.getSockets().length() == 12)) {
