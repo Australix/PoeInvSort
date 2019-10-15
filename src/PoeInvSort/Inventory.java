@@ -74,7 +74,7 @@ public class Inventory {
 	
 	public void transferItemsToStash() throws Throwable {
 		for (int tab : tabs.keySet()) {
-			if (tab != -2 && !(tabs.get(tab).isEmpty())) {
+			if (tab > 0 && !(tabs.get(tab).isEmpty())) {
 				MKControl.openTab(tab);
 				MKControl.ctrlClickAt(tabs.get(tab));
 			}

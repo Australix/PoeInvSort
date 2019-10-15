@@ -40,7 +40,7 @@ public class Main {
 		
 		// item sorting rules
 		for (int i = 16; i < lines.length; i++) {
-			sortRules.add(new SortingRule(lines[i]));
+			if (!lines[i].equals("")) sortRules.add(new SortingRule(lines[i]));
 		}
 		
 		inventory = new Inventory();
