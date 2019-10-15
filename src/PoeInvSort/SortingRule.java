@@ -20,10 +20,9 @@ public class SortingRule {
 	
 	// Array of tags used to detect Fragments. 
 	private static final String[] fragmentTags = {
-			"Offering to the ",
+			"Offering to the Goddess",
 			"Sacrifice at ",
 			"Fragment of the ",
-			//"Blessing of ",
 			"Splinter of ",
 			"Mortal ",
 			"'s Breachstone",
@@ -35,9 +34,9 @@ public class SortingRule {
 	private boolean isFragment(String itemName) {
 		if (containsAny(itemName, fragmentTags)) return true;
 		String[] tokens = itemName.split(" ");
-		if (tokens.length == 3) {
-			if (tokens[0].equals("Timeless") && tokens[2].equals("Splinter")) return true;
-			if (tokens[0].equals("Timeless") && tokens[2].equals("Emblem")) return true;
+		if (tokens.length >= 3) {
+			if (tokens[0].equals("Timeless") && tokens[tokens.length-1].equals("Splinter")) return true;
+			if (tokens[0].equals("Timeless") && tokens[tokens.length-1].equals("Emblem")) return true;
 			if (tokens[2].equals("Scarab")) return true;
 		}
 		return false;
