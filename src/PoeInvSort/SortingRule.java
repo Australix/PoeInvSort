@@ -22,7 +22,7 @@ public class SortingRule {
 	private static final String[] fragmentTags = {
 			"Offering to the Goddess",
 			"Sacrifice at ",
-			"Fragment of the ",
+			"Fragment of ",
 			"Splinter of ",
 			"Mortal ",
 			"'s Breachstone",
