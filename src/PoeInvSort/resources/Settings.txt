@@ -14,6 +14,8 @@ Lines of text between "Daily Mission" and "Purchase Decorations":
 12
 
 Item filters (<destTab>:<rarity>:<nameContains>:<descriptionContains>):
+8:*:Delirium Orb:*
+8:*:Blighted:*
 0:*:Map:*
 3:#fragment:*:*
 4:#fossil:*:*
@@ -21,6 +23,8 @@ Item filters (<destTab>:<rarity>:<nameContains>:<descriptionContains>):
 5:#essence:*:*
 1:Currency:*:*
 2:Divination:*:*
+7:*:Incubator:*
+8:*:*:Tane's Laboratory
 6:*:*:*
 6:*:*:#6socket
 6:*:*:#chromatic
