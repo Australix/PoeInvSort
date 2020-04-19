@@ -24,10 +24,6 @@ public class Inventory {
 	
 	public void processInventory() throws Throwable {
 		scanInventory();
-		if (autoVendor) {
-			sellItems();
-			scanInventory();
-		}
 		transferItemsToStash();
 		MKControl.openTab(0);
 	}
@@ -79,15 +75,6 @@ public class Inventory {
 				MKControl.ctrlClickAt(tabs.get(tab));
 			}
 		}
-	}
-	
-	public void sellItems() throws Throwable {
-		LinkedList<Item> sellable = tabs.get(-2);
-		MKControl.sellItems(sellable);
-		for (Item item : sellable) {
-			updateItemPresence(item, false);
-		}
-		tabs.put(-2, new LinkedList<Item>());
 	}
 	
 	public void updateItemPresence(Item item, boolean b) {

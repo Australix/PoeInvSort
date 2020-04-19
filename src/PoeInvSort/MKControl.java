@@ -24,7 +24,6 @@ import com.sun.jna.platform.win32.WinDef.WORD;
 import static com.sun.jna.platform.win32.User32.INSTANCE;
 
 public class MKControl {
-	private static final double uiWidth = 12.670; // 840/66.3 pixels
 	private static double slotSize; // 66.3 pixels/1360 height
 	private static double scaleFactor; // windows scaling factor
 	private static int[] windowDims; // [0]=left, [1]=top, [2]=right, [3]=bottom
@@ -209,7 +208,7 @@ public class MKControl {
 		LONG x = new LONG((int) ((windowDims[0] + X * slotSize) * xMouseScale));
 		LONG y = new LONG((int) ((windowDims[1] + Y * slotSize) * yMouseScale));
 		jnaMouseMove(x, y);
-		waitCnst(15);
+		waitCnst(20);
 	}
 	
 	/* Used for UI elements on right half of screen e.g. inventory.
@@ -218,7 +217,7 @@ public class MKControl {
 		LONG x = new LONG((int) ((windowDims[2] - X * slotSize) * xMouseScale));
 		LONG y = new LONG((int) ((windowDims[1] + Y * slotSize) * yMouseScale));
 		jnaMouseMove(x, y);
-		waitCnst(15);
+		waitCnst(20);
 	}
 	
 	/* Used for character movement. 
@@ -227,19 +226,7 @@ public class MKControl {
 		LONG x = new LONG((int) (((windowDims[0] + windowDims[2])/2 + X * slotSize) * xMouseScale));
 		LONG y = new LONG((int) ((windowDims[1] + Y * slotSize) * yMouseScale));
 		jnaMouseMove(x, y);
-		waitCnst(15);
-	}
-	
-	// 1732, 528	1510
-	public static void moveTo(String loc) throws Throwable {
-		jnaKeyPress(KeyEvent.VK_SPACE);
-		jnaKeyRelease(KeyEvent.VK_SPACE);
-		wait(50);
-		if (loc.equals("stash")) mouseMoveFromMiddle(0.181, 8.30);
-		else if (loc.equals("vendor")) mouseMoveFromMiddle(-3.167, 7.964);
-		else return;
-		click();
-		wait(1000);
+		waitCnst(20);
 	}
 	
 	public static void openTab(int tab) throws Throwable {
@@ -270,27 +257,16 @@ public class MKControl {
 		jnaKeyPress(KeyEvent.VK_C);
 		jnaKeyRelease(KeyEvent.VK_C);
 		jnaKeyRelease(KeyEvent.VK_CONTROL);
-		wait(15);
-		return (String) Toolkit.getDefaultToolkit().
-				getSystemClipboard().getData(DataFlavor.stringFlavor);
-	}
-
-	public static void sellItems(LinkedList<Item> sellable) throws Throwable {
-		if (!sellable.isEmpty() && vendorSellOffset != null) {
-			moveTo("vendor"); // one line = 28.25 pixels
-			mouseMoveFromMiddle(0.0, 4.0 + 0.426*vendorSellOffset); // DESKTOP Y COORD IS 9.11
-			click();
-			wait(300);
-			ctrlClickAt(sellable);
-			int x = windowDims[2] - (int)(uiWidth * slotSize);
-			x = x/2 - (int)(4.5 * slotSize);
-			LONG xx = new LONG(x * 65536 / (windowDims[2] - windowDims[0]));
-			LONG yy = new LONG((int)(16.048 * slotSize) * 65536 / (windowDims[3] - windowDims[1]));
-			jnaMouseMove(xx, yy);
-			waitCnst(25);
-			click();
-			wait(500);
-			moveTo("stash");
+		wait(25);
+		String ret = null;
+		for (int attempts = 0; ret == null && attempts < 5; attempts++) {
+			try {
+				ret = (String) Toolkit.getDefaultToolkit().
+						getSystemClipboard().getData(DataFlavor.stringFlavor);
+			} catch (Exception e) {
+				wait(25);
+			}
 		}
+		return ret;
 	}
 }
