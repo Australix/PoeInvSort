@@ -28,7 +28,6 @@ public class Item {
 		name = data[1];
 		if (!data[2].contains("---")) name = name + " " + data[2];
 		
-
 		sockets = "";
 		for (int i = 5; i < data.length; i++) {
 			if (data[i].startsWith("Sockets")) {
