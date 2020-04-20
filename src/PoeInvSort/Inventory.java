@@ -13,7 +13,7 @@ public class Inventory {
 	
 	static boolean autoVendor = false;
 	
-	public Inventory() throws Throwable {
+	public Inventory() {
 		tabs.put(-2, new LinkedList<Item>());
 		for (SortingRule s : Main.sortRules) {
 			if (tabs.get(s.tab) == null) {
@@ -22,13 +22,13 @@ public class Inventory {
 		}
 	}
 	
-	public void processInventory() throws Throwable {
+	public void processInventory() {
 		scanInventory();
 		transferItemsToStash();
 		MKControl.openTab(0);
 	}
 	
-	public void scanInventory() throws Throwable {
+	public void scanInventory() {
 		int count = 0;
 		for (int i = 0; i < 60; i++) {
 			if (itemPresentAt[i]) {
@@ -68,7 +68,7 @@ public class Inventory {
 		}
 	}
 	
-	public void transferItemsToStash() throws Throwable {
+	public void transferItemsToStash() {
 		for (int tab : tabs.keySet()) {
 			if (tab >= 0 && !(tabs.get(tab).isEmpty())) {
 				MKControl.openTab(tab);

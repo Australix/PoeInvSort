@@ -16,7 +16,7 @@ public class Item {
 	}
 
 	// constructor
-	public Item(int loc, String copiedData) throws Throwable {
+	public Item(int loc, String copiedData) {
 		data = copiedData;
 		location = loc;
 		initData();
@@ -40,7 +40,7 @@ public class Item {
 		return sockets;
 	}
 
-	public void sizeItem() throws Throwable {
+	public void sizeItem() {
 		if (size == Size.Unsized) {
 			if        ((location%5 < 2) && locCompare(location+8)) {
 				size = Size._2x4;
@@ -62,7 +62,7 @@ public class Item {
 		}
 	}
 	
-	private boolean locCompare(int newLoc) throws Throwable {
+	private boolean locCompare(int newLoc) {
 		if (newLoc > 59) return false;
 		String otherData = Main.inventory.readItemData(newLoc);
 		if (otherData == null) otherData = MKControl.copyItemInfo(newLoc);

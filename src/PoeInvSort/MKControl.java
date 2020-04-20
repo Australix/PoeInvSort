@@ -30,16 +30,20 @@ public class MKControl {
 	// Pixels on screen have to be multiplied by these values for mouse movement
 	private static double xMouseScale;
 	private static double yMouseScale;
-	
+
+	private static final int waitShort = 15;  // for after mouse movements
+	private static final int waitMed   = 25;  // for obtaining text from clipboard
+	private static final int waitLong  = 100; // for selecting stash tabs
+
 	// JNA inputs for mouse/keyboard functions
 	private static INPUT[] mousePress;
 	private static INPUT[] mouseMove;
 	private static INPUT[] keyPress;
 	// Constants for JNA mouse control
-	private static final long MOUSEEVENTF_MOVE = 0x0001L;
+	private static final long MOUSEEVENTF_MOVE     = 0x0001L;
 	private static final long MOUSEEVENTF_ABSOLUTE = 0x8000L;
 	private static final long MOUSEEVENTF_LEFTDOWN = 0x0002L;
-	private static final long MOUSEEVENTF_LEFTUP = 0x0004L;
+	private static final long MOUSEEVENTF_LEFTUP   = 0x0004L;
 	// Constants for window scaling
 	private static final int VERTRES = 10;
 	private static final int DESKTOPVERTRES = 117;
@@ -121,7 +125,7 @@ public class MKControl {
 		yMouseScale = 65536.0 / yMonitor / scaleFactor;
 	}
 
-	private static void jnaMouseMove(LONG x, LONG y) {
+	private static void jnaMouseMove(double X, double Y) {
 		// init
 		if (mouseMove == null) {
 			// mouse movement code gotten from 
@@ -134,11 +138,13 @@ public class MKControl {
 			mm.input.mi.time = new DWORD(0);
 			mouseMove = new INPUT[] {mm};
 		}
+		
+		LONG x = new LONG((int) X);
+		LONG y = new LONG((int) Y);
 
 		mouseMove[0].input.mi.dx = x;
 		mouseMove[0].input.mi.dy = y;
-		@SuppressWarnings("unused")
-		DWORD result = INSTANCE.SendInput(new DWORD(1), mouseMove, mouseMove[0].size()); 
+		INSTANCE.SendInput(new DWORD(1), mouseMove, mouseMove[0].size()); 
 		// inputs are # inputs, INPUT[] array, struct size
 	}
 	
@@ -154,10 +160,9 @@ public class MKControl {
 		}
 
 		mousePress[0].input.mi.dwFlags = new DWORD(MOUSEEVENTF_LEFTDOWN); // press
-		@SuppressWarnings("unused")
-		DWORD result = INSTANCE.SendInput(new DWORD(1), mousePress, mousePress[0].size());
+		INSTANCE.SendInput(new DWORD(1), mousePress, mousePress[0].size());
 		mousePress[0].input.mi.dwFlags = new DWORD(MOUSEEVENTF_LEFTUP); // release
-		result = INSTANCE.SendInput(new DWORD(1), mousePress, mousePress[0].size());
+		INSTANCE.SendInput(new DWORD(1), mousePress, mousePress[0].size());
 	}
 	
 	private static void jnaKeyPress(int key) {
@@ -194,65 +199,69 @@ public class MKControl {
 		INSTANCE.SendInput(new DWORD(1), keyPress, keyPress[0].size());
 	}
 	
-	public static void wait(int time) throws InterruptedException {
-		int rand = (int) (Math.random() * time/4) + time;
-		if (slowerExc) Thread.sleep(rand*3);
-		else Thread.sleep(rand);
+	public static void wait(int time) {
+		int newTime = (int) (Math.random() * time/4) + time;
+		waitCnst(newTime);
 	}
 	
-	public static void waitCnst(int time) throws InterruptedException {
-		if (slowerExc) Thread.sleep(time*3);
-		else Thread.sleep(time);
+	public static void waitCnst(int time) {
+		try {
+			if (slowerExc) Thread.sleep(time*3);
+			else Thread.sleep(time);
+		} catch (InterruptedException e) {
+			// Program is single-threaded, so this should never happen
+			throw new RuntimeException("Unexpected interrupt while waiting", e);
+		}
 	}
 
 	/* Used for UI elements on left half of screen e.g. stash.
 	 * Inputs are in scale of inventory spaces. */
-	private static void mouseMoveFromLeft(double X, double Y) throws Throwable {
-		LONG x = new LONG((int) ((windowDims[0] + X * slotSize) * xMouseScale));
-		LONG y = new LONG((int) ((windowDims[1] + Y * slotSize) * yMouseScale));
+	private static void mouseMoveFromLeft(double X, double Y) {
+		double x = ((windowDims[0] + X * slotSize) * xMouseScale);
+		double y = ((windowDims[1] + Y * slotSize) * yMouseScale);
 		jnaMouseMove(x, y);
-		waitCnst(15);
+		waitCnst(waitShort);
 	}
 	
 	/* Used for UI elements on right half of screen e.g. inventory.
 	 * Inputs are in scale of inventory spaces. */
-	private static void mouseMoveFromRight(double X, double Y) throws Throwable {
-		LONG x = new LONG((int) ((windowDims[2] - X * slotSize) * xMouseScale));
-		LONG y = new LONG((int) ((windowDims[1] + Y * slotSize) * yMouseScale));
+	private static void mouseMoveFromRight(double X, double Y) {
+		double x = ((windowDims[2] - X * slotSize) * xMouseScale);
+		double y = ((windowDims[1] + Y * slotSize) * yMouseScale);
 		jnaMouseMove(x, y);
-		waitCnst(15);
+		waitCnst(waitShort);
 	}
 	
 	/* Used for character movement. 
 	 * Measured from middle of width of screen and top of window. */
-	public static void mouseMoveFromMiddle(double X, double Y) throws Throwable {
-		LONG x = new LONG((int) (((windowDims[0] + windowDims[2])/2 + X * slotSize) * xMouseScale));
-		LONG y = new LONG((int) ((windowDims[1] + Y * slotSize) * yMouseScale));
+	public static void mouseMoveFromMiddle(double X, double Y) {
+		double x = (((windowDims[0] + windowDims[2])/2 + X * slotSize) * xMouseScale);
+		double y = ((windowDims[1] + Y * slotSize) * yMouseScale);
 		jnaMouseMove(x, y);
-		waitCnst(15);
+		waitCnst(waitShort);
 	}
 	
-	public static void openTab(int tab) throws Throwable {
+	public static void openTab(int tab) {
 		mouseMoveFromLeft(12.157, 2.715);
 		click();
-		wait(100);
+		wait(waitLong);
 		mouseMoveFromLeft(12.972, 2.715 + 0.4247 * tab);
 		click();
-		wait(200);
+		wait(waitLong*2);
 	}
 	
-	public static void ctrlClickAt(LinkedList<Item> items) throws Throwable {
+	public static void ctrlClickAt(LinkedList<Item> items) {
 		jnaKeyPress(KeyEvent.VK_CONTROL);
 		for (Item item : items) {
 			int loc = item.location;
 			mouseMoveFromRight(11.840 - (loc/5), 11.674 + (loc%5));
 			click();
-			wait(15);
+			wait(waitShort);
 		}
 		jnaKeyRelease(KeyEvent.VK_CONTROL);
 	}	
 	
-	public static String copyItemInfo(int loc) throws Throwable {
+	public static String copyItemInfo(int loc) {
 		String ret = null;
 		for (int attempts = 0; ret == null && attempts < 5; attempts++) {
 			try {
@@ -263,11 +272,16 @@ public class MKControl {
 				jnaKeyPress(KeyEvent.VK_C);
 				jnaKeyRelease(KeyEvent.VK_C);
 				jnaKeyRelease(KeyEvent.VK_CONTROL);
-				wait(25);
+				wait(waitMed);
 				ret = (String) Toolkit.getDefaultToolkit().
 						getSystemClipboard().getData(DataFlavor.stringFlavor);
 			} catch (Exception e) {
-				wait(25);
+				if (attempts < 5) {
+					wait(waitMed);
+				} else {
+					System.out.println(e);
+					e.printStackTrace();
+				}
 			}
 		}
 		return ret;
