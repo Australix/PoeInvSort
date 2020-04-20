@@ -54,7 +54,7 @@ public class Inventory {
 					for (SortingRule s : Main.sortRules) {
 						if (s.isMatch(item)) {
 							item.size = s.guessSize(item);
-							//item.sizeItem();
+							item.sizeItem();
 							item.type = s.tab;
 							break;
 						}

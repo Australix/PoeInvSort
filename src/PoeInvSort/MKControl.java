@@ -40,9 +40,6 @@ public class MKControl {
 	private static final long MOUSEEVENTF_ABSOLUTE = 0x8000L;
 	private static final long MOUSEEVENTF_LEFTDOWN = 0x0002L;
 	private static final long MOUSEEVENTF_LEFTUP = 0x0004L;
-	// Constants for window scaling
-	private static final int VERTRES = 10;
-	private static final int DESKTOPVERTRES = 117;
 	
 	static boolean slowerExc = false;
 	static Integer vendorSellOffset = null;
@@ -64,8 +61,8 @@ public class MKControl {
 	private static double getScaleFactor() {
 		WinDef.HDC hdc = GDI32.INSTANCE.CreateCompatibleDC(null);
 		if (hdc != null) {
-			double actual  = GDI32.INSTANCE.GetDeviceCaps(hdc, VERTRES);
-			double logical = GDI32.INSTANCE.GetDeviceCaps(hdc, DESKTOPVERTRES);
+			double actual = GDI32.INSTANCE.GetDeviceCaps(hdc, 10 /* VERTRES */);
+			double logical = GDI32.INSTANCE.GetDeviceCaps(hdc, 117 /* DESKTOPVERTRES */);
 			GDI32.INSTANCE.DeleteDC(hdc);
 
 			if (logical != 0 && logical/actual >= 1) {
@@ -211,7 +208,7 @@ public class MKControl {
 		LONG x = new LONG((int) ((windowDims[0] + X * slotSize) * xMouseScale));
 		LONG y = new LONG((int) ((windowDims[1] + Y * slotSize) * yMouseScale));
 		jnaMouseMove(x, y);
-		waitCnst(15);
+		waitCnst(20);
 	}
 	
 	/* Used for UI elements on right half of screen e.g. inventory.
@@ -220,7 +217,7 @@ public class MKControl {
 		LONG x = new LONG((int) ((windowDims[2] - X * slotSize) * xMouseScale));
 		LONG y = new LONG((int) ((windowDims[1] + Y * slotSize) * yMouseScale));
 		jnaMouseMove(x, y);
-		waitCnst(15);
+		waitCnst(20);
 	}
 	
 	/* Used for character movement. 
@@ -229,7 +226,7 @@ public class MKControl {
 		LONG x = new LONG((int) (((windowDims[0] + windowDims[2])/2 + X * slotSize) * xMouseScale));
 		LONG y = new LONG((int) ((windowDims[1] + Y * slotSize) * yMouseScale));
 		jnaMouseMove(x, y);
-		waitCnst(15);
+		waitCnst(20);
 	}
 	
 	public static void openTab(int tab) throws Throwable {
@@ -247,23 +244,23 @@ public class MKControl {
 			int loc = item.location;
 			mouseMoveFromRight(11.840 - (loc/5), 11.674 + (loc%5));
 			click();
-			wait(15);
+			wait(20);
 		}
 		jnaKeyRelease(KeyEvent.VK_CONTROL);
 	}	
 	
 	public static String copyItemInfo(int loc) throws Throwable {
+		Toolkit.getDefaultToolkit().getSystemClipboard().
+				setContents(new StringSelection(""), null);
+		mouseMoveFromRight(11.840 - (loc/5), 11.674 + (loc%5));
+		jnaKeyPress(KeyEvent.VK_CONTROL);
+		jnaKeyPress(KeyEvent.VK_C);
+		jnaKeyRelease(KeyEvent.VK_C);
+		jnaKeyRelease(KeyEvent.VK_CONTROL);
+		wait(25);
 		String ret = null;
 		for (int attempts = 0; ret == null && attempts < 5; attempts++) {
 			try {
-				Toolkit.getDefaultToolkit().getSystemClipboard().
-						setContents(new StringSelection(""), null);
-				mouseMoveFromRight(11.840 - (loc/5), 11.674 + (loc%5));
-				jnaKeyPress(KeyEvent.VK_CONTROL);
-				jnaKeyPress(KeyEvent.VK_C);
-				jnaKeyRelease(KeyEvent.VK_C);
-				jnaKeyRelease(KeyEvent.VK_CONTROL);
-				wait(25);
 				ret = (String) Toolkit.getDefaultToolkit().
 						getSystemClipboard().getData(DataFlavor.stringFlavor);
 			} catch (Exception e) {
