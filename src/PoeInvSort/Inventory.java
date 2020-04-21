@@ -11,10 +11,7 @@ public class Inventory {
 			new HashMap<Integer, LinkedList<Item>>();
 	private HashMap<Integer, String> itemData = new HashMap<Integer, String>();
 	
-	static boolean autoVendor = false;
-	
 	public Inventory() {
-		tabs.put(-2, new LinkedList<Item>());
 		for (SortingRule s : Main.sortRules) {
 			if (tabs.get(s.tab) == null) {
 				tabs.put(s.tab, new LinkedList<Item>());

@@ -22,6 +22,9 @@ public class Main {
 	}
 	
 	private static void initialize() throws Throwable {
+		inventory = new Inventory();
+		MKControl.init();
+		
 		// load settings from Settings file
 		String settings = fileToString("Settings.txt");
 		String[] lines = settings.split("\\r?\\n");
@@ -33,19 +36,12 @@ public class Main {
 		for (int i = 0; i < ignoreSlots.length; i++) {
 			list.add(Integer.parseInt(ignoreSlots[i]));
 		}
-		
-		// auto vendor settings
-		if (lines[10].equals("TRUE")) Inventory.autoVendor = true;
-		MKControl.vendorSellOffset = Integer.parseInt(lines[13]);
+		inventory.setIgnore(list);
 		
 		// item sorting rules
-		for (int i = 16; i < lines.length; i++) {
+		for (int i = 10; i < lines.length; i++) {
 			if (!lines[i].equals("")) sortRules.add(new SortingRule(lines[i]));
 		}
-		
-		inventory = new Inventory();
-		inventory.setIgnore(list);
-		MKControl.init();
 	}
 
     public static String fileToString(String resource) {

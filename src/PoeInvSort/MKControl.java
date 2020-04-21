@@ -49,7 +49,6 @@ public class MKControl {
 	private static final int DESKTOPVERTRES = 117;
 	
 	static boolean slowerExc = false;
-	static Integer vendorSellOffset = null;
 	
 	public static HWND hwnd = User32.INSTANCE.GetForegroundWindow();
 
