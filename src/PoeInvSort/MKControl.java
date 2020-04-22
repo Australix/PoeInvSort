@@ -242,6 +242,7 @@ public class MKControl {
 	
 	public static void openTab(int tab) {
 		mouseMoveFromLeft(12.157, 2.715);
+		waitCnst(waitShort);
 		click();
 		wait(waitLong);
 		mouseMoveFromLeft(12.972, 2.715 + 0.4247 * tab);

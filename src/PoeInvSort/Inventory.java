@@ -9,15 +9,6 @@ public class Inventory {
 	private boolean[] itemPresentAt = new boolean[60];
 	private HashMap<Integer, LinkedList<Item>> tabs = 
 			new HashMap<Integer, LinkedList<Item>>();
-	private HashMap<Integer, String> itemData = new HashMap<Integer, String>();
-	
-	public Inventory() {
-		for (SortingRule s : Main.sortRules) {
-			if (tabs.get(s.tab) == null) {
-				tabs.put(s.tab, new LinkedList<Item>());
-			}
-		}
-	}
 	
 	public void processInventory() {
 		scanInventory();
@@ -29,15 +20,9 @@ public class Inventory {
 		int count = 0;
 		for (int i = 0; i < 60; i++) {
 			if (itemPresentAt[i]) {
-				itemData.remove(i);
 				count = 0;
 			} else {
-				String copiedData = itemData.get(i);
-				if (copiedData == null) {
-					copiedData = MKControl.copyItemInfo(i);
-				} else {
-					itemData.remove(i);
-				}
+				String copiedData = MKControl.copyItemInfo(i);
 				// for efficiency, if 10 empty spaces in a row are found, detection terminates
 				if (copiedData.equals("")) {
 					count++;
@@ -51,14 +36,18 @@ public class Inventory {
 					for (SortingRule s : Main.sortRules) {
 						if (s.isMatch(item)) {
 							item.size = s.guessSize(item);
-							//item.sizeItem();
 							item.type = s.tab;
 							break;
 						}
 					}
 					updateItemPresence(item, true);
-					if (item.type != -1) {
-						tabs.get(item.type).add(item);
+					if (item.type >= 0) {
+						LinkedList<Item> tab = tabs.get(item.type);
+						if (tab == null) {
+							tab = new LinkedList<Item>();
+							tabs.put(item.type, tab);
+						}
+						tab.add(item);
 					}
 				}
 			}
@@ -115,14 +104,6 @@ public class Inventory {
 			itemPresentAt[loc+7] = b;
 			itemPresentAt[loc+8] = b;
 		}
-	}
-	
-	public void addToItemData(int i, String s) {
-		itemData.put(i, s);
-	}
-	
-	public String readItemData(int i) {
-		return itemData.get(i);
 	}
 	
 	public void setIgnore(LinkedList<Integer> list) {

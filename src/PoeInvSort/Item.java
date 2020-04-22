@@ -40,40 +40,6 @@ public class Item {
 		return sockets;
 	}
 
-	public void sizeItem() {
-		if (size == Size.Unsized) {
-			if        ((location%5 < 2) && locCompare(location+8)) {
-				size = Size._2x4;
-			} else if ((location%5 < 2) && locCompare(location+3)) {
-				size = Size._1x4;
-			} else if ((location%5 < 3) && locCompare(location+7)) {
-				size = Size._2x3;
-			} else if ((location%5 < 3) && locCompare(location+2)) {
-				size = Size._1x3;
-			} else if ((location%5 < 4) && locCompare(location+6)) {
-				size = Size._2x2;
-			} else if ((location%5 < 4) && locCompare(location+1)) {
-				size = Size._1x2;
-			} else if (                    locCompare(location+5)) {
-				size = Size._2x1;
-			} else {
-				size = Size._1x1;
-			}
-		}
-	}
-	
-	private boolean locCompare(int newLoc) {
-		if (newLoc > 59) return false;
-		String otherData = Main.inventory.readItemData(newLoc);
-		if (otherData == null) otherData = MKControl.copyItemInfo(newLoc);
-		if (otherData.equals(data)) {
-			return true;
-		} else {
-			Main.inventory.addToItemData(newLoc, otherData);
-			return false;
-		}
-	}
-
 	public String getData() {
 		return data;
 	}

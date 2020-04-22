@@ -13,7 +13,9 @@ public class Main {
 		try {
 			//Thread.sleep(6000);
 			initialize();
-			inventory.processInventory();
+			inventory.scanInventory();
+			inventory.transferItemsToStash();
+			MKControl.openTab(0);
 
 	    } catch (Throwable ex) {
 	        System.err.println("Uncaught exception - " + ex.getMessage());
